@@ -148,13 +148,32 @@ const updateUI = function (acc) {
   calcDisplaySummary(acc);
 };
 
-//Event Handlers
-let currentAccount;
+const startLogoutTimer = function () {
+  const tick = function () {
+    const min = String(Math.trunc(timeCount / 60)).padStart(2, 0);
+    const sec = String(Math.trunc(timeCount % 60)).padStart(2, 0);
+    labelTimer.textContent = `${min}:${sec}`;
 
-//FAKE LOGGED IN
-currentAccount = account1;
-updateUI(currentAccount);
-containerApp.style.opacity = 100;
+    //in each call back call print the remaining time to UI
+    //when the time is at zero, stop timer and log out user
+    if (timeCount === 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = 'Log In to get started 😎';
+      containerApp.style.opacity = 0;
+    }
+    //Decrese by 1s
+    timeCount = timeCount - 1;
+  };
+  //setting the time to 5 minutes
+  let timeCount = 300;
+  //call the timer every second
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
+//Event Handlers
+let currentAccount, timer;
 
 btnLogin.addEventListener('click', function (e) {
   //prevent form from submitting - page being refreshed
@@ -162,7 +181,7 @@ btnLogin.addEventListener('click', function (e) {
   currentAccount = accounts.find(
     acc => acc.username === inputLoginUsername.value
   ); //getting value out of input
-  console.log(currentAccount);
+
   if (currentAccount?.pin === +inputLoginPin.value) {
     //display UI and welcome message
     labelWelcome.textContent = `Welcome Back, ${
@@ -184,7 +203,9 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginPin.value = '';
     //take cursor away from pin
     inputLoginPin.blur();
-
+    //start logout timer
+    if (timer) clearInterval(timer);
+    timer = startLogoutTimer();
     updateUI(currentAccount);
   }
 });
@@ -251,7 +272,7 @@ btnClose.addEventListener('click', function (event) {
     const index = accounts.findIndex(
       account => account.username === currentAccount.username
     );
-    console.log(index);
+
     accounts.splice(index, 1);
 
     //hide UI
